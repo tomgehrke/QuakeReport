@@ -22,4 +22,7 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="EarthquakeValue">
+        <item name="android:padding">16dp</item>
+    </style>
 </resources>
