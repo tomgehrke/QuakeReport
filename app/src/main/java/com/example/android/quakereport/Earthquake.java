@@ -5,13 +5,15 @@ public class Earthquake {
     private double mMagnitude;
     private String mLocation;
     private long mDate;
+    private String mUrl; 
 
     // Constructors
 
-    public Earthquake(double magnitude, String location, long date) {
+    public Earthquake(double magnitude, String location, long date, String url) {
         this.mMagnitude = magnitude;
         this.mLocation = location;
         this.mDate = date;
+        this.mUrl = url;
     }
 
 
@@ -41,6 +43,13 @@ public class Earthquake {
         this.mDate = date;
     }
 
+    public String getUrl() {
+        return mUrl;
+    }
+
+    public void setUrl(String Url) {
+        this.mUrl = Url;
+    }
 
     // Overrides
 
@@ -48,8 +57,9 @@ public class Earthquake {
     public String toString() {
         return "Earthquake{" +
                 "mMagnitude=" + mMagnitude +
-                ", mLocation='" + mLocation + '\'' +
+                ", mLocation='" + mLocation + "'" +
                 ", mDate=" + mDate +
+                ", mUrl'" + mUrl + "'" +
                 '}';
     }
 

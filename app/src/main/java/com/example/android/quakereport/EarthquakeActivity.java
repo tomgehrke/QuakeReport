@@ -15,48 +15,74 @@
  */
 package com.example.android.quakereport;
 
+import android.content.Intent;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.ArrayAdapter;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 
 public class EarthquakeActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = EarthquakeActivity.class.getName();
+    private static final String USGS_REQUEST_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&minmag=6&limit=10";
+    private EarthquakeArrayAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.earthquake_activity);
 
-        // Create a fake list of earthquake locations.
-        ArrayList<Earthquake> earthquakes = new ArrayList<Earthquake>();
-
-        try {
-            earthquakes.add(new Earthquake(7.2, "San Francisco", new SimpleDateFormat("MM/dd/yyyy HHmm").parse("02/02/2016 0000").getTime()));
-            earthquakes.add(new Earthquake(6.1, "London", new SimpleDateFormat("MM/dd/yyyy HHmm").parse("07/20/2015 0000").getTime()));
-            earthquakes.add(new Earthquake(3.9, "Tokyo", new SimpleDateFormat("MM/dd/yyyy HHmm").parse("11/10/2014 0000").getTime()));
-            earthquakes.add(new Earthquake(5.4, "Mexico City", new SimpleDateFormat("MM/dd/yyyy HHmm").parse("05/03/2014 0000").getTime()));
-            earthquakes.add(new Earthquake(2.8, "Moscow", new SimpleDateFormat("MM/dd/yyyy HHmm").parse("01/31/2013 0000").getTime()));
-            earthquakes.add(new Earthquake(4.9, "Rio de Janeiro", new SimpleDateFormat("MM/dd/yyyy HHmm").parse("08/19/2012 0000").getTime()));
-            earthquakes.add(new Earthquake(1.6, "Paris", new SimpleDateFormat("MM/dd/yyyy HHmm").parse("10/30/2011 0000").getTime()));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
         // Find a reference to the {@link ListView} in the layout
-        ListView earthquakeListView = (ListView) findViewById(R.id.list);
+        ListView earthquakeListView = (ListView) findViewById(R.id.earthquakeListView);
 
         // Create a new {@link ArrayAdapter} of earthquakes
-        ArrayAdapter<Earthquake> adapter = new EarthquakeArrayAdapter(this, earthquakes);
+        mAdapter = new EarthquakeArrayAdapter(this, new ArrayList<Earthquake>());
 
         // Set the adapter on the {@link ListView}
         // so the list can be populated in the user interface
-        earthquakeListView.setAdapter(adapter);
+        earthquakeListView.setAdapter(mAdapter);
+
+        // Set item listener
+        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                Earthquake currentEarthquake = mAdapter.getItem(position);
+
+                Intent navigationIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(currentEarthquake.getUrl()));
+                if (navigationIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(navigationIntent);
+                }
+            }
+        });
+
+        // Start AsyncTask to get the Earthquakes
+        EarthquakeAsyncTask earthquakeAsyncTask = new EarthquakeAsyncTask();
+        earthquakeAsyncTask.execute(USGS_REQUEST_URL);
+    }
+
+    private class EarthquakeAsyncTask extends AsyncTask<String, Void, ArrayList<Earthquake>> {
+        @Override
+        protected ArrayList<Earthquake> doInBackground(String... params) {
+            return QueryUtils.fetchEarthquakeData(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Earthquake> earthquakes) {
+            // Clear the adapter of previous earthquake data
+            mAdapter.clear();
+
+            // If there is a valid list of {@link Earthquake}s, then add them to the adapter's
+            // data set. This will trigger the ListView to update.
+            if (earthquakes != null && !earthquakes.isEmpty()) {
+                mAdapter.addAll(earthquakes);
+            }
+        }
     }
 }
